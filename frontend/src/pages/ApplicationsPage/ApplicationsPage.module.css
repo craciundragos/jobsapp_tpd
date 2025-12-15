@@ -1,0 +1,51 @@
+.page {
+    padding: 40px;
+    font-family: "Inter", sans-serif;
+}
+
+.title {
+    font-size: 2rem;
+    color: #0d47a1;
+    margin-bottom: 20px;
+}
+
+.backBtn {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #1565c0;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.error {
+    color: #d32f2f;
+    margin-bottom: 20px;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.card {
+    background: #fff;
+    color: #000; /* ← asta lipsea */
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
+}
+
+.noApps {
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.resumeLink {
+    display: inline-block;
+    margin-top: 10px;
+    color: #1565c0;
+    font-weight: 600;
+    text-decoration: none;
+}

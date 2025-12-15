@@ -1,0 +1,53 @@
+.container {
+    max-width: 400px;
+    margin: 120px auto;
+    text-align: center;
+    background-color: dimgray;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 200px 5px rgba(25, 102, 210,0.8)
+}
+
+.title {
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(25, 102, 210, 0.5);
+
+}
+
+.input {
+    display: block;
+    width: 85%;
+    padding: 10px;
+    margin: 5px auto;
+    margin-bottom: 6px;
+}
+
+.button {
+    background-color: #1966d2;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 16px;
+    border-color: darkorchid;
+    cursor: pointer;
+}
+
+.error {
+    color: #f44336;
+    background-color: #ffebee;
+    border: 1px solid #f44336;
+    border-radius: 4px;
+    padding: 8px;
+    margin: 10px auto;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    width: 85%;
+}
+
+.registerLink {
+    color: white;
+    text-decoration: none;
+    background-color: #1966d2;
+    padding: 5px;
+    border-radius: 10px;
+}
