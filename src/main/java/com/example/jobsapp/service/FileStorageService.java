@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Service
 public class FileStorageService {
-    private static final String UPLOAD_DIR = "D:/jobsapp_resumes/";
+    private static final String UPLOAD_DIR = "D:/cv-uri";
 
     public String saveResume(MultipartFile resumeFile) throws IOException {
         Files.createDirectories(Paths.get(UPLOAD_DIR));

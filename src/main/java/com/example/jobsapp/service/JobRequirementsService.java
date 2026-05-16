@@ -18,6 +18,7 @@ public class JobRequirementsService {
     private final ObjectMapper mapper;
     private final TextChunker textChunker;
     private final ChromaService chromaService;
+
     public void saveRequirements(Integer jobId, JobRequirementsFormDTO form) {
         try {
             String formJson = mapper.writeValueAsString(form);

@@ -4,12 +4,15 @@ import com.example.jobsapp.DTOs.ApplicationDTO;
 import com.example.jobsapp.DTOs.MatchResult;
 import com.example.jobsapp.entity.Application;
 import com.example.jobsapp.entity.Job;
+import com.example.jobsapp.entity.JobRequirements;
 import com.example.jobsapp.entity.User;
 import com.example.jobsapp.mapper.ApplicationMapper;
 import com.example.jobsapp.repository.ApplicationRepository;
 import com.example.jobsapp.repository.JobRepository;
+import com.example.jobsapp.repository.JobRequirementsRepository;
 import com.example.jobsapp.repository.UserRepository;
 import com.example.jobsapp.utils.TextChunker;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -32,13 +36,15 @@ public class ApplicationService {
     private final TextExtractService textExtractorService;
     private final ChromaService chromaService;
     private final TextChunker textChunker;
+    private final JobRequirementsRepository jobRequirementsRepository;
     private final OllamaService ollamaService;
 
-    public ApplicationDTO applyToJob(Integer jobId, Integer userId, MultipartFile resumeFile, String role) throws IOException {
-        validateApplication(jobId, userId, role);
-        String resumePath = fileStorageService.saveResume(resumeFile);
+    public ApplicationDTO applyToJobRag(Integer jobId, Integer userId, MultipartFile resumeFile) throws IOException {
+        validateApplication(jobId, userId);
+        String fileName = fileStorageService.saveResume(resumeFile);
+        String resumePath = "/D/cv-uri/" + fileName;
 
-        String cvText = textExtractorService.extractText(resumePath);
+        String cvText = ollamaService.extractFullCvTextTool(resumePath);
         System.out.println("EXTRACTED CV TEXT:\n" + cvText);
 
         List<String> chunks = textChunker.splitIntoChunks(cvText, 500);
@@ -49,16 +55,36 @@ public class ApplicationService {
         chromaService.uploadCvChunks(jobId, userId, chunks);
         List<MatchResult> matchResults = chromaService.matchCvToJob(jobId, userId);
         System.out.println("MATCH RESULTS = " + matchResults);
-        String aiResponse = ollamaService.scoreCandidate(jobId, matchResults);
+        JobRequirements jobRequirements = jobRequirementsRepository.findTopByJobIdOrderByIdDesc(jobId);
+        String jobRequirementsText = jobRequirements.getGeneratedText();
+        String aiResponse = ollamaService.scoreCandidateRag(jobId, jobRequirementsText, matchResults);
         System.out.println("SCORE RESULT = " + aiResponse);
-        Application application = saveApplication(jobId, userId, resumePath, aiResponse);
+        Application application = new Application();
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode json = mapper.readTree(aiResponse);
+
+        application.setUser(user);
+        application.setJob(job);
+        application.setResumeUrl(fileName);
+        application.setRankAi(json.get("score").asInt());
+        application.setExplanation(json.get("explanation").asText());
+        application = applicationRepository.save(application);
 
         return ApplicationMapper.toApplicationDTO(application);
     }
 
+    public ApplicationDTO applyToJobAgentic(Integer jobId, Integer userId, MultipartFile resumeFile) throws IOException {
+        validateApplication(jobId, userId);
+        System.out.println("intrat in metoda ");
 
-    private Application saveApplication(Integer jobId, Integer userId, String resumePath, String aiResponse) {
-
+        String fileName = fileStorageService.saveResume(resumeFile);
+        System.out.println("intrat in metoda ");
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -68,28 +94,37 @@ public class ApplicationService {
         Application application = new Application();
         application.setUser(user);
         application.setJob(job);
-        application.setResumeUrl(resumePath);
-        application.setStatus("submitted");
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            aiResponse = aiResponse.replaceAll("```json", "");
-            aiResponse = aiResponse.replaceAll("```", "");
-            Map<String, Object> json = mapper.readValue(aiResponse, Map.class);
+        application.setResumeUrl(fileName);
+        application.setRankAi(null);
+        application.setExplanation(null);
+        application = applicationRepository.save(application);
 
-            Integer score = ((Integer) json.get("score"));
-            String explanation = (String) json.get("explanation");
+        String resumeContainerPath = "/D/cv-uri/" + fileName;
+        JobRequirements jobRequirements = jobRequirementsRepository.findTopByJobIdOrderByIdDesc(jobId);
+        String jobReqText = jobRequirements.getGeneratedText();
+        System.out.println("Calling agent for applicationId=" + application.getId());
+        System.out.println(resumeContainerPath);
+        String aiJson = ollamaService.scoreOnlyAgentic(
+                application.getId(),
+                jobReqText,
+                resumeContainerPath
+        );
 
-            application.setRankAi(score);
-            application.setExplanation(explanation);
+        System.out.println("Agent call finished for applicationId=" + application.getId());
+        System.out.println("AI RESPONSE: " + aiJson);
 
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse AI response: " + aiResponse, e);
-        }
-        return applicationRepository.save(application);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode json = mapper.readTree(aiJson);
+
+        application.setRankAi(json.get("score").asInt());
+        application.setExplanation(json.get("explanation").asText());
+
+        application = applicationRepository.save(application);
+
+        return ApplicationMapper.toApplicationDTO(application);
     }
 
-
-    public void validateApplication(Integer jobId, Integer userId, String role) {
+    public void validateApplication(Integer jobId, Integer userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -104,7 +139,7 @@ public class ApplicationService {
 
 
     public List<ApplicationDTO> getApplicationsByJob(Integer jobId) {
-     List<ApplicationDTO> applications = applicationRepository.findByJobId(jobId)
+        List<ApplicationDTO> applications = applicationRepository.findByJobId(jobId)
                 .stream()
                 .map(ApplicationMapper::toApplicationDTO)
                 .toList();

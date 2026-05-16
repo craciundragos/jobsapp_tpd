@@ -2,6 +2,7 @@ package com.example.jobsapp.DTOs;
 import lombok.Data;
 import jakarta.validation.constraints.*;
 import jakarta.validation.Valid;
+
 @Data
 public class    UserLoginDTO {
     @Email(message = "Invalid email address.")

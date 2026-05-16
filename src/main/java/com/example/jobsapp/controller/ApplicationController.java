@@ -25,34 +25,6 @@ public class ApplicationController {
     private final ApplicationService applicationService;
     private final FileStorageService fileStorageService;
 
-//    @PostMapping(value = "/apply", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    public ResponseEntity<?> applyToJob(
-//            @RequestParam("jobId") Integer jobId,
-//            @RequestPart("resume") MultipartFile resumeFile) throws IOException {
-//        try {
-//            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-//
-//            Integer userId = userDetails.getId();
-//            String role = userDetails.getAuthorities().iterator().next().getAuthority();
-//            applicationService.validateApplication(jobId, userId, role);;
-//            String resumePath = fileStorageService.saveResume(resumeFile);
-//
-//            ApplicationDTO createdApplication = applicationService.createApplication(jobId, userId, resumePath);
-//
-//
-//            return ResponseEntity.ok(createdApplication);
-//        }
-//        catch (RuntimeException e) {
-//            return ResponseEntity
-//                    .status(HttpStatus.BAD_REQUEST)
-//                    .body(Map.of("error", e.getMessage()));
-//        } catch (IOException e) {
-//            return ResponseEntity
-//                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body(Map.of("error", "Failed to upload resume."));
-//        }
-//    }
     @PostMapping(value = "/apply", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> applyToJob(
             @RequestParam("jobId") Integer jobId,
@@ -65,7 +37,7 @@ public class ApplicationController {
             Integer userId = user.getId();
             String role = user.getAuthorities().iterator().next().getAuthority();
 
-            ApplicationDTO dto = applicationService.applyToJob(jobId, userId, resumeFile, role);
+            ApplicationDTO dto = applicationService.applyToJobAgentic(jobId, userId, resumeFile);
 
             return ResponseEntity.ok(dto);
 

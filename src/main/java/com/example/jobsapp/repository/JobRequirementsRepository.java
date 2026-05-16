@@ -8,4 +8,5 @@ import java.util.Optional;
 @Repository
 public interface JobRequirementsRepository extends JpaRepository<JobRequirements, Integer> {
     JobRequirements findByJobId(Integer jobId);
+    JobRequirements findTopByJobIdOrderByIdDesc(Integer jobId);
 }
