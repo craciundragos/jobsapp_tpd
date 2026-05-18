@@ -1,5 +1,7 @@
+import {API_BASE_URL} from "../api.ts";
+
 export async function loginUser(email: string, password: string) {
-    const response = await fetch("/api/users/login", {
+    const response = await fetch(`${API_BASE_URL}/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -20,7 +22,7 @@ export async function registerUser(
     password: string,
     role: number
 ) {
-    const response = await fetch("/api/users/register", {
+    const response = await fetch(`${API_BASE_URL}/users/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password, role }),

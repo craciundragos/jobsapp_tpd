@@ -1,5 +1,6 @@
+import {API_BASE_URL} from "../api.ts";
 export async function getAllJobs() {
-    const response = await fetch("/api/jobs");
+    const response = await fetch(`${API_BASE_URL}/jobs`);
     if (!response.ok) {
         throw new Error("Eroare la preluarea joburilor");
     }
@@ -16,7 +17,7 @@ export async function applyToJob(jobId: number, resumeFile: File) {
     formData.append("jobId", String(jobId));
     formData.append("resume", resumeFile);
 
-    const res = await fetch("/api/applications/apply", {
+    const res = await fetch(`${API_BASE_URL}/applications/apply`, {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${token}`,
@@ -36,7 +37,7 @@ export async function applyToJob(jobId: number, resumeFile: File) {
 
 export async function getAllRecruiterJobs() {
     const token = sessionStorage.getItem("token");
-    const response = await fetch(`/api/jobs/recruiter`, {
+    const response = await fetch(`${API_BASE_URL}/jobs/recruiter`, {
         method: "GET",
         headers: {
             "Authorization": `Bearer ${token}`,
@@ -56,7 +57,7 @@ export async function createJob(job: {
 }) {
     const token = sessionStorage.getItem("token");
 
-    const response = await fetch("/api/jobs", {
+    const response = await fetch(`${API_BASE_URL}/jobs`, {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${token}`,

@@ -1,3 +1,5 @@
+import {API_BASE_URL} from "../api.ts";
+
 export interface JobRequirementsForm {
     minExperience: number;
     mustHaveSkills: string[];
@@ -13,7 +15,7 @@ export async function saveJobRequirements(jobId: number, form: JobRequirementsFo
         throw new Error("User not authenticated");
     }
 
-    const response = await fetch(`/api/jobs/${jobId}/requirements`, {
+    const response = await fetch(`${API_BASE_URL}/jobs/${jobId}/requirements`, {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${token}`,
