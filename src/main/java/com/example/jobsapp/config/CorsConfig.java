@@ -16,7 +16,8 @@ public class CorsConfig {
                 registry.addMapping("/api/**")
                         .allowedOrigins(
                                 "http://localhost:5173",
-                                "http://jobsapp-frontend.s3-website.eu-central-1.amazonaws.com"
+                                "http://jobsapp-frontend.s3-website.eu-central-1.amazonaws.com",
+                                "https://d20sxu16mvz3bm.cloudfront.net"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")
@@ -25,7 +26,8 @@ public class CorsConfig {
                 registry.addMapping("/resume/**")
                         .allowedOrigins(
                                 "http://localhost:5173",
-                                "http://jobsapp-frontend.s3-website.eu-central-1.amazonaws.com"
+                                "http://jobsapp-frontend.s3-website.eu-central-1.amazonaws.com",
+                                "https://d20sxu16mvz3bm.cloudfront.net"
                         )
                         .allowedMethods("GET", "OPTIONS")
                         .allowedHeaders("*")
