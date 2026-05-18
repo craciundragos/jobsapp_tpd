@@ -13,14 +13,14 @@ import java.util.List;
 public class OllamaService {
 
     private final ChatClient chatClient;
-    private final ToolCallbackProvider mcpToolProvider;
+    private final ToolCallbackProvider toolProvider;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public OllamaService(Builder chatClientBuilder,
-                         ToolCallbackProvider mcpToolProvider) {
+                         ToolCallbackProvider toolProvider) {
 
         this.chatClient = chatClientBuilder.build();
-        this.mcpToolProvider = mcpToolProvider;
+        this.toolProvider = toolProvider;
     }
 
     public String extractFullCvTextTool(String resumeContainerPath) {
@@ -28,7 +28,7 @@ public class OllamaService {
                 You are an AI made for extracting full CV text from PDFs by using Tools 
                 Return ONLY the extracted text. No JSON. No markdown fences.
                 Rules:
-                - You ONLY need to call the tool pdf_to_markdown with {"filepath":"%s"} to get resume_text.
+                - You ONLY need to call the tool pdf_to_markdown with {"s3Key":"%s"} to get resume_text.
                 - DO NOT CALL OTHER TOOL. ONLY PDF_TO_MARKDOWN.
                 - Your final answer MUST be the extracted text ONLY.
                 Path: %s
@@ -37,7 +37,7 @@ public class OllamaService {
         return chatClient.prompt()
                 .system(system)
                 .user("Extract text from this PDF.")
-                .toolCallbacks(mcpToolProvider)
+                .toolCallbacks(toolProvider)
                 .call()
                 .content();
     }
@@ -104,34 +104,71 @@ public class OllamaService {
     }
 
 
-    public String scoreOnlyAgentic(Integer applicationId, String jobRequirementsText, String resumeContainerPath) {
+    public String scoreOnlyAgentic(Integer applicationId, String jobRequirementsText, String resumeS3Key) {
+
+        System.out.println("scoreOnlyAgentic called");
+        System.out.println("applicationId = " + applicationId);
+        System.out.println("resumeS3Key = " + resumeS3Key);
+        System.out.println("jobRequirementsText length = " + (jobRequirementsText == null ? 0 : jobRequirementsText.length()));
 
         String system = """
-                You are a job recruitment scoring AI Model.
-                
-                Rules:
-                - You ONLY need to call the tool pdf_to_markdown with {"filepath":"%s"} to get resume_text.
-                - DO NOT CALL OTHER TOOL. ONLY PDF_TO_MARKDOWN.
-                - Then compare resume_text with JOB_REQUIREMENTS_TEXT.
-                - Your final answer MUST be VALID JSON ONLY
-                - The JSON must have EXACTLY these keys: score, explanation
-                - score must be 0 to 100 (integer).
-                - explanation must be one line, max 800 chars, and MUST NOT contain single quotes (').
-                - Output must look exactly like this (example): {"score":65,"explanation":"Some single-line explanation without single quotes."}
-                """.formatted(resumeContainerPath);
+        You are a strict recruitment scoring engine.
+        
+        You have access to exactly one tool:
+        pdf_to_markdown
+        
+        You MUST follow this exact sequence:
+        Step 1: Call pdf_to_markdown with {"s3Key":"%s"}.
+        Step 2: Read the text returned by the tool.
+        Step 3: Compare the returned resume text with JOB_REQUIREMENTS_TEXT.
+        Step 4: Return only one JSON object.
+        
+        Critical rules:
+        - You MUST NOT say that the tool output is missing.
+        - The tool output is the resume text.
+        - After calling the tool, use the returned text as CV_TEXT.
+        - Do not mention the tool in the final answer.
+        - Do not explain your reasoning.
+        - Do not use markdown.
+        - Do not write text before the JSON.
+        - Do not write text after the JSON.
+        - Your final answer must start with { and end with }.
+        
+        JSON rules:
+        - Return valid JSON only.
+        - The JSON must have exactly these keys: score, explanation.
+        - score must be an integer from 0 to 100.
+        - explanation must be one line, max 250 characters.
+        - explanation must not contain single quotes.
+        
+        Scoring rubric:
+        - Must-have skills match: up to 55 points.
+        - Minimum experience match: up to 25 points.
+        - Nice-to-have skills: up to 10 points.
+        - Soft skills: up to 10 points.
+        - If a must-have skill is missing, score should rarely exceed 70.
+        
+        Example final answer:
+        {"score":65,"explanation":"Candidate partially matches the role but is missing some must-have requirements."}
+        """.formatted(resumeS3Key);
 
         String user = """
-                JOB_REQUIREMENTS_TEXT:
-                %s
-                """.formatted(jobRequirementsText == null ? "" : jobRequirementsText);
+        JOB_REQUIREMENTS_TEXT:
+        %s
+        
+        Score this candidate using the resume text returned by the pdf_to_markdown tool.
+        Return JSON only.
+        """.formatted(jobRequirementsText == null ? "" : jobRequirementsText);
 
         String result = chatClient.prompt()
                 .system(system)
                 .user(user)
-                .toolCallbacks(mcpToolProvider)
+                .toolCallbacks(toolProvider)
                 .call()
                 .content();
 
+        System.out.println("RAW OLLAMA RESULT:");
+        System.out.println(result);
         return result;
     }
 }

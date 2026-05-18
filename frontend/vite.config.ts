@@ -1,12 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+    plugins: [react()],
     server: {
         proxy: {
-            '/api': 'http://localhost:8080'
-        }
-    }
+            '/api': {
+                target: 'http://jobsapp-alb-842034691.eu-central-1.elb.amazonaws.com',
+                changeOrigin: true,
+                secure: false,
+                timeout: 300000,
+                proxyTimeout: 300000
+            },
+        },
+    },
 })

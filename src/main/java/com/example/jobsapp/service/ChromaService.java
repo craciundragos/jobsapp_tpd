@@ -4,6 +4,7 @@ import com.example.jobsapp.ChromaClient;
 import com.example.jobsapp.DTOs.MatchResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,8 +16,11 @@ public class ChromaService {
 
     private final ChromaClient chromaClient;
 
-    private final String CV_COLLECTION = "276cad80-943a-4266-bb62-2f7a099ec0c6";
-    private final String JOB_REQ_COLLECTION = "c1164efa-3bfe-4ab8-a8f3-edd70a74a486";
+    @Value("${chroma.cv-collection}")
+    private String CV_COLLECTION;
+
+    @Value("${chroma.job-req-collection}")
+    private String JOB_REQ_COLLECTION;
     private final OllamaEmbeddingService ollamaEmbeddingService;
 
     public void uploadCvChunks(Integer jobId, Integer userId, List<String> chunks) {

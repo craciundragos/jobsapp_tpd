@@ -1,5 +1,6 @@
 package com.example.jobsapp.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -11,7 +12,8 @@ import java.util.Map;
 public class OllamaEmbeddingService {
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private static final String OLLAMA_URL = "http://localhost:11434/api/embeddings";
+    @Value("${ollama.embeddings-url}")
+    private String OLLAMA_URL;
 
     public List<Double> embed(String text) {
 

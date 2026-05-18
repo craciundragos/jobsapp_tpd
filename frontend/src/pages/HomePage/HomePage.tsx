@@ -47,8 +47,12 @@ export default function JobsPage() {
             await applyToJob(selectedJob.id, resumeFile);
             alert("Aplicația a fost trimisă cu succes!");
             setShowModal(false);
-        } catch (err: any) {
-            alert(err.message || "Eroare la aplicare");
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                alert(err.message);
+            } else {
+                alert("Eroare la aplicare");
+            }
         } finally {
             setApplyLoading(false);
         }
@@ -95,7 +99,7 @@ export default function JobsPage() {
                                 Status:{" "}
                                 <span
                                     className={
-                                        job.status === "open" ? styles.open : styles.closed
+                                        job.status === "OPEN" ? styles.open : styles.closed
                                     }
                                 >
                   {job.status}
@@ -104,7 +108,7 @@ export default function JobsPage() {
                             </p>
                             <button
                                 className={styles.applyButton}
-                                disabled={job.status !== "open"}
+                                disabled={job.status !== "OPEN"}
                                 onClick={() => handleApplyClick(job)}
                             >
                                 Apply

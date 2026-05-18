@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/chroma/test").permitAll()
                         .requestMatchers(HttpMethod.GET, "/resume/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/test/**").permitAll()
+                        .requestMatchers("/api/health").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

@@ -41,10 +41,12 @@ public class ApplicationService {
 
     public ApplicationDTO applyToJobRag(Integer jobId, Integer userId, MultipartFile resumeFile) throws IOException {
         validateApplication(jobId, userId);
-        String fileName = fileStorageService.saveResume(resumeFile);
-        String resumePath = "/D/cv-uri/" + fileName;
+        FileStorageService.SavedResume savedResume = fileStorageService.saveResume(resumeFile);
 
-        String cvText = ollamaService.extractFullCvTextTool(resumePath);
+        String fileName = savedResume.fileName();
+        String resumeS3Key = savedResume.s3Key();
+
+        String cvText = ollamaService.extractFullCvTextTool(resumeS3Key);
         System.out.println("EXTRACTED CV TEXT:\n" + cvText);
 
         List<String> chunks = textChunker.splitIntoChunks(cvText, 500);
@@ -66,12 +68,11 @@ public class ApplicationService {
 
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode json = mapper.readTree(aiResponse);
+        JsonNode json = parseAiJson(aiResponse);
 
         application.setUser(user);
         application.setJob(job);
-        application.setResumeUrl(fileName);
+        application.setResumeUrl(savedResume.s3Key());
         application.setRankAi(json.get("score").asInt());
         application.setExplanation(json.get("explanation").asText());
         application = applicationRepository.save(application);
@@ -83,8 +84,11 @@ public class ApplicationService {
         validateApplication(jobId, userId);
         System.out.println("intrat in metoda ");
 
-        String fileName = fileStorageService.saveResume(resumeFile);
-        System.out.println("intrat in metoda ");
+        FileStorageService.SavedResume savedResume = fileStorageService.saveResume(resumeFile);
+
+        String fileName = savedResume.fileName();
+        String resumeS3Key = savedResume.s3Key();
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -94,27 +98,27 @@ public class ApplicationService {
         Application application = new Application();
         application.setUser(user);
         application.setJob(job);
-        application.setResumeUrl(fileName);
+        application.setResumeUrl(savedResume.s3Key());
         application.setRankAi(null);
         application.setExplanation(null);
         application = applicationRepository.save(application);
 
-        String resumeContainerPath = "/D/cv-uri/" + fileName;
         JobRequirements jobRequirements = jobRequirementsRepository.findTopByJobIdOrderByIdDesc(jobId);
         String jobReqText = jobRequirements.getGeneratedText();
         System.out.println("Calling agent for applicationId=" + application.getId());
-        System.out.println(resumeContainerPath);
+        System.out.println("Resume S3 key sent to agent = " + resumeS3Key);
+        System.out.println("Job requirements length = " + (jobReqText == null ? 0 : jobReqText.length()));
         String aiJson = ollamaService.scoreOnlyAgentic(
                 application.getId(),
                 jobReqText,
-                resumeContainerPath
+                resumeS3Key
         );
 
         System.out.println("Agent call finished for applicationId=" + application.getId());
-        System.out.println("AI RESPONSE: " + aiJson);
+        System.out.println("AI RESPONSE RAW:");
+        System.out.println(aiJson);
 
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode json = mapper.readTree(aiJson);
+        JsonNode json = parseAiJson(aiJson);
 
         application.setRankAi(json.get("score").asInt());
         application.setExplanation(json.get("explanation").asText());
@@ -136,7 +140,23 @@ public class ApplicationService {
             throw new RuntimeException("You have already applied for this job.");
         }
     }
+    private JsonNode parseAiJson(String aiJson) throws IOException {
+        if (aiJson == null || aiJson.isBlank()) {
+            throw new RuntimeException("AI response is empty");
+        }
 
+        int start = aiJson.indexOf('{');
+        int end = aiJson.lastIndexOf('}');
+
+        if (start < 0 || end < 0 || end <= start) {
+            throw new RuntimeException("AI response does not contain a JSON object: " + aiJson);
+        }
+
+        String jsonOnly = aiJson.substring(start, end + 1);
+
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readTree(jsonOnly);
+    }
 
     public List<ApplicationDTO> getApplicationsByJob(Integer jobId) {
         List<ApplicationDTO> applications = applicationRepository.findByJobId(jobId)

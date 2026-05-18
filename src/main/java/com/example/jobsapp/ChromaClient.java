@@ -7,6 +7,7 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.HashMap;
@@ -17,7 +18,8 @@ import java.util.Map;
 @Component
 public class ChromaClient {
 
-    private final String baseUrl = "http://localhost:8000/api/v1/collections";
+    @Value("${chroma.collections-url}")
+    private String baseUrl;
     private final ObjectMapper mapper = new ObjectMapper();
     private final CloseableHttpClient http = HttpClients.createDefault();
 
