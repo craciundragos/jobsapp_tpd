@@ -108,6 +108,7 @@ public class ApplicationService {
         String jobReqText = jobRequirements.getGeneratedText();
         System.out.println("Calling agent for applicationId=" + application.getId());
         System.out.println("Resume S3 key sent to agent = " + resumeS3Key);
+        System.out.println("Job requirements text = " + (jobReqText == null ? 0 : jobReqText));
         System.out.println("Job requirements length = " + (jobReqText == null ? 0 : jobReqText.length()));
         aiScoringAsyncService.scoreApplicationAsyncAgentic(
                 application.getId(),

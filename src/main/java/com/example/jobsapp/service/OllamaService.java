@@ -151,10 +151,11 @@ public class OllamaService {
             - Soft skills: up to 10 points.
             
             Scoring consistency rules:
-            - Base the score only on evidence found in CV_TEXT.
+            - Be strict. If the job is not in the same field the score should be much smaller.
+            - Base the score only on evidence found in CV_TEXT compared to the JOB_REQUIREMENTS_TEXT.
             - Do not infer missing technical skills unless they are clearly implied by experience.
             - If the candidate matches most must-have skills and the minimum experience, the score should usually be 75 or higher.
-            - If the candidate matches few or none of the must-have skills, the score should usually be below 50.
+            - If the candidate matches few or none of the must-have skills, the score should usually be below 30.
             - If the score is 80 or higher, the explanation must sound like a strong match with minor gaps.
             - If the score is below 50, the explanation must clearly state the main mismatch.
             - The explanation must be consistent with the numeric score.
