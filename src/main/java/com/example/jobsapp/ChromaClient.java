@@ -44,9 +44,12 @@ public class ChromaClient {
 
             var response = http.execute(post);
             int status = response.getCode();
-
+            String responseBody = "";
+            if (response.getEntity() != null) {
+                responseBody = new String(response.getEntity().getContent().readAllBytes());
+            }
             if (status != 201 && status != 200) {
-                throw new RuntimeException("Chroma error: " + status);
+                throw new RuntimeException("Chroma error: " + status + " body: " + responseBody);
             }
 
         } catch (IOException e) {
