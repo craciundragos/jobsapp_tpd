@@ -66,7 +66,7 @@ public class OllamaService {
                 - The JSON must have EXACTLY these keys: score, explanation
                 - score must be 0 to 100 (integer).
                 - explanation must be one line, max 800 chars, and MUST NOT contain single quotes (').
-                - Output must look exactly like this (example):
+                - Output must look EXACTLY like this (example):
                   {"score":65,"explanation":"Some single-line explanation without single quotes."}
                 
                 Scoring rubric (0..100):

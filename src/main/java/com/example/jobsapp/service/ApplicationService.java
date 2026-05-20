@@ -29,6 +29,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ApplicationService {
 
+    private final AiScoringAsyncService aiScoringAsyncService;
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
     private final JobRepository jobRepository;
@@ -108,24 +109,14 @@ public class ApplicationService {
         System.out.println("Calling agent for applicationId=" + application.getId());
         System.out.println("Resume S3 key sent to agent = " + resumeS3Key);
         System.out.println("Job requirements length = " + (jobReqText == null ? 0 : jobReqText.length()));
-        String aiJson = ollamaService.scoreOnlyAgentic(
+        aiScoringAsyncService.scoreApplicationAsyncAgentic(
                 application.getId(),
                 jobReqText,
                 resumeS3Key
         );
 
-        System.out.println("Agent call finished for applicationId=" + application.getId());
-        System.out.println("AI RESPONSE RAW:");
-        System.out.println(aiJson);
-
-        JsonNode json = parseAiJson(aiJson);
-
-        application.setRankAi(json.get("score").asInt());
-        application.setExplanation(json.get("explanation").asText());
-
-        application = applicationRepository.save(application);
-
         return ApplicationMapper.toApplicationDTO(application);
+
     }
 
     public void validateApplication(Integer jobId, Integer userId) {
